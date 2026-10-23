@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>VR Store — Prototype · Everyday Essentials</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div id="bgFx" aria-hidden="true"></div>
+
+<header class="topbar glass">
+  <div class="brand">
+    <div class="brand-mark">VR</div>
+    <div class="brand-text">
+      <div class="brand-name">VR STORE <span class="proto-tag">PROTOTYPE</span></div>
+      <div class="brand-sub">Immersive commerce platform</div>
+    </div>
+  </div>
+  <div class="store-id">
+    <div class="store-name" id="storeNameHdr">Everyday Essentials</div>
+    <div class="store-addr" id="storeAddrHdr">📍 Neon District · Circuit Ave 42 · vrstore.example/everyday-essentials</div>
+  </div>
+  <nav class="mainnav">
+    <button class="nav-btn active" data-nav="store">🛍️ Store</button>
+    <button class="nav-btn" data-nav="agent">🤖 Agent View</button>
+    <button class="nav-btn" data-nav="admin">🛠️ Owner Admin</button>
+  </nav>
+  <button id="cartBtn" class="cart-btn">🧺 Cart <span id="cartCount" class="cart-count">0</span></button>
+</header>
+
+<main>
+  <!-- ============ STOREFRONT ============ -->
+  <section id="view-store" class="view active">
+    <div class="store-stage glass">
+      <div id="scene3d"></div>
+      <div class="hud hud-tl">
+        <div class="hud-chip" id="hudStoreChip">EVERYDAY ESSENTIALS</div>
+        <div class="hud-chip hud-dim" id="hudModeChip">VIRTUAL STORE</div>
+      </div>
+      <div class="hud hud-tr">
+        <div class="hud-chip hud-live"><span class="pulse-dot"></span> OPEN · HUMANS + AGENTS WELCOME</div>
+      </div>
+      <div class="hud hud-bl" id="hudHint">Drag to look around · Tap a product on the shelf</div>
+      <div class="viewbar" id="viewBtns">
+        <button data-view-pt="entrance" class="vbtn active">Entrance</button>
+        <button data-view-pt="aisle1" class="vbtn">Aisle 1 · Pantry</button>
+        <button data-view-pt="aisle2" class="vbtn">Aisle 2 · Home &amp; Care</button>
+        <button data-view-pt="wide" class="vbtn">Overview</button>
+      </div>
+      <div id="sceneFallback" class="scene-fallback hidden">
+        3D engine unavailable on this device — the full catalog is listed below, same prices, same stock.
+      </div>
+
+      <!-- product card -->
+      <div id="productCard" class="product-card glass hidden" role="dialog" aria-modal="false">
+        <button class="pc-close" id="pcClose" aria-label="Close">✕</button>
+        <div class="pc-swatch" id="pcSwatch">PRODUCT</div>
+        <div class="pc-body">
+          <div class="pc-name" id="pcName">—</div>
+          <div class="pc-meta"><span id="pcSku">—</span> · <span id="pcUnit">—</span></div>
+          <p class="pc-blurb" id="pcBlurb">—</p>
+          <div class="pc-row">
+            <div class="pc-price" id="pcPrice">$0.00</div>
+            <div class="pc-stock" id="pcStock">In stock</div>
+          </div>
+          <div class="pc-row">
+            <div class="qty-stepper">
+              <button id="pcMinus" aria-label="Less">−</button>
+              <span id="pcQty">1</span>
+              <button id="pcPlus" aria-label="More">+</button>
+            </div>
+            <button id="pcAdd" class="btn-primary">Add to cart</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="shelf-browser glass">
+      <div class="sb-head">
+        <h2>Browse the shelves</h2>
+        <span class="sb-note">Same live catalog the 3D shelves and the agent API read.</span>
+      </div>
+      <div id="aisleList"></div>
+    </div>
+  </section>
+
+  <!-- ============ AGENT VIEW ============ -->
+  <section id="view-agent" class="view">
+    <div class="agent-grid">
+      <div class="glass panel">
+        <h2>🤖 Machine-readable catalog</h2>
+        <p class="panel-sub">Agents read the exact same live catalog state as the 3D shelves —
+        <code>GET /stores/everyday-essentials/catalog</code> in production (see <code>AGENT-API.md</code>).
+        Also shipped as <code>catalog.json</code> in this prototype.</p>
+        <div class="btn-row">
+          <button class="btn-ghost" id="copyJsonBtn">📋 Copy JSON</button>
+          <button class="btn-ghost" id="dlJsonBtn">⬇️ Download catalog.json</button>
+          <button class="btn-ghost" id="refreshJsonBtn">↻ Refresh</button>
+        </div>
+        <pre id="agentJson" class="json-box">{}</pre>
+      </div>
+
+      <div class="glass panel">
+        <h2>💸 Agent checkout · x402 demo</h2>
+        <p class="panel-sub">Agents pay the <strong>full amount in USDC via x402</strong>.
+        This is the labeled demo handshake — no wallets, no keys, no chain calls.</p>
+        <label>Agent identity <input id="agName" type="text" value="PantryBot-7" autocomplete="off"></label>
+        <label>Item (SKU)
+          <select id="agSku"></select>
+        </label>
+        <label>Quantity <input id="agQty" type="number" min="1" value="2"></label>
+        <div class="ag-total">Order total: <strong id="agTotal">$0.00</strong></div>
+        <button class="btn-primary wide" id="agRequestBtn">1 · Request order →</button>
+
+        <div id="x402box" class="x402-box hidden">
+          <div class="x402-step" id="xStep1">
+            <div class="x402-title">⚠️ 402 · Payment Required</div>
+            <pre class="json-box small" id="x402req">{}</pre>
+            <button class="btn-primary wide" id="agPayBtn">2 · Submit simulated payment (X-PAYMENT header)</button>
+          </div>
+          <div class="x402-step hidden" id="xStep2">
+            <div class="x402-title">⏳ Verifying + settling with facilitator…</div>
+            <div class="settle-bar"><div class="settle-fill" id="settleFill"></div></div>
+            <div class="x402-note">Facilitator /verify → /settle · USDC transferWithAuthorization (simulated)</div>
+          </div>
+          <div class="x402-step hidden" id="xStep3">
+            <div class="x402-title">✅ PAID · Order settled</div>
+            <pre class="json-box small" id="x402receipt">{}</pre>
+            <button class="btn-ghost wide" id="agAgainBtn">New agent order</button>
+          </div>
+        </div>
+        <p class="fineprint">Production spec: resource request → 402 + payment requirements →
+        retry with signed payment header → facilitator verify/settle → USDC settlement on Base.
+        Full blueprint in <code>AGENT-API.md</code>.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ OWNER ADMIN ============ -->
+  <section id="view-admin" class="view">
+    <div class="stats-strip">
+      <div class="glass stat"><div class="stat-num" id="statItems">0</div><div class="stat-lbl">Catalog items</div></div>
+      <div class="glass stat"><div class="stat-num warn" id="statLow">0</div><div class="stat-lbl">Low stock (&lt;5)</div></div>
+      <div class="glass stat"><div class="stat-num" id="statOrders">0</div><div class="stat-lbl">Orders (all buyers)</div></div>
+      <div class="glass stat"><div class="stat-num" id="statRevenue">$0</div><div class="stat-lbl">Demo revenue</div></div>
+    </div>
+
+    <!-- Create your store -->
+    <div class="glass panel">
+      <h2>🏗️ Create your store — two paths</h2>
+      <p class="panel-sub">Every store is born one of two ways. Both land on the same catalog, inventory, orders and agent machinery.</p>
+      <div class="path-grid">
+        <div class="path-card" id="pathVirtualCard">
+          <div class="path-ico">🌐</div>
+          <h3>Path A · Build Virtual</h3>
+          <p>Arrange a store from platform templates. It receives a <strong>virtual address</strong> in the world plus a shareable store URL.</p>
+          <label>District
+            <select id="vsDistrict">
+              <option>Neon District</option><option>Harbor Quarter</option>
+              <option>Old Market</option><option>Skyline Row</option>
+            </select></label>
+          <label>Street <input id="vsStreet" type="text" value="Circuit Ave"></label>
+          <label>Number <input id="vsNumber" type="number" value="42" min="1"></label>
+          <label>Display real-world address on storefront (optional)
+            <input id="vsRealAddr" type="text" placeholder="e.g. 123 Main St, Springfield"></label>
+          <button class="btn-primary wide" id="vsApplyBtn">Assign virtual address</button>
+          <div class="path-result" id="vsResult"></div>
+        </div>
+        <div class="path-card" id="pathScanCard">
+          <div class="path-ico">📸</div>
+          <h3>Path B · Scan My Store</h3>
+          <p>Upload photos or a video walkthrough of your real shop — the platform rebuilds it as your virtual store. <em>Demo: your photo becomes the store's world backdrop, with your catalog on the shelves.</em></p>
+          <input id="scanFile" type="file" accept="image/*,video/*">
+          <div id="scanPreview" class="scan-preview hidden"></div>
+          <button class="btn-primary wide" id="scanApplyBtn" disabled>Use as my store backdrop</button>
+          <div class="path-result" id="scanResult"></div>
+          <p class="fineprint">Production: walkthrough video → photogrammetry / 3D Gaussian splatting →
+          navigable reconstruction. Steps + honesty notes in <code>DESIGN-NOTES.md</code>.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Inventory -->
+    <div class="glass panel">
+      <h2>📦 Inventory</h2>
+      <p class="panel-sub">One shared catalog state: edit here and the 3D shelves, the storefront list, and the agent API change with it.</p>
+      <form id="invForm" class="inv-form">
+        <input type="hidden" id="invId">
+        <label>Name <input id="invName" required type="text" placeholder="Product name"></label>
+        <label>SKU <input id="invSku" required type="text" placeholder="EE-0000"></label>
+        <label>Price $ <input id="invPrice" required type="number" step="0.01" min="0" placeholder="0.00"></label>
+        <label>Stock <input id="invStock" required type="number" min="0" placeholder="0"></label>
+        <label>Aisle
+          <select id="invAisle"><option value="1">Aisle 1 · Pantry</option><option value="2">Aisle 2 · Home &amp; Care</option></select></label>
+        <label>Unit <input id="invUnit" type="text" placeholder="e.g. 16 oz box"></label>
+        <label>Label color <input id="invColor" type="color" value="#4fa8c9"></label>
+        <div class="inv-form-btns">
+          <button type="submit" class="btn-primary" id="invSaveBtn">Add item</button>
+          <button type="button" class="btn-ghost hidden" id="invCancelBtn">Cancel edit</button>
+        </div>
+      </form>
+      <div class="table-wrap"><table id="invTable">
+        <thead><tr><th>Item</th><th>SKU</th><th>Price</th><th>Stock</th><th>Aisle</th><th></th></tr></thead>
+        <tbody></tbody>
+      </table></div>
+    </div>
+
+    <!-- Orders -->
+    <div class="glass panel">
+      <h2>🧾 Orders — humans + agents, one pipeline</h2>
+      <div class="table-wrap"><table id="ordersTable">
+        <thead><tr><th>Order</th><th>Buyer</th><th>Type</th><th>Items</th><th>Total</th><th>Payment</th><th>Status</th></tr></thead>
+        <tbody></tbody>
+      </table></div>
+      <div id="ordersEmpty" class="empty-note">No orders yet. Buy something in the store, or run an agent checkout.</div>
+      <div class="btn-row"><button class="btn-ghost danger" id="resetBtn">↺ Reset demo data</button></div>
+    </div>
+
+    <!-- Store Coin Maker -->
+    <div class="glass panel coin-panel">
+      <h2>🪙 Store Coin Maker <span class="concept-badge">CONCEPT FEATURE · DEMO ONLY</span></h2>
+      <p class="panel-sub">Design your own store coin. Customers earn it shopping and spend it at checkout.
+      <strong>No real token is created</strong> — real issuance stays behind per-business legal review.</p>
+      <div class="coin-grid">
+        <div class="coin-form">
+          <div class="wizard-steps"><span class="wstep active">1 · Name it</span><span class="wstep">2 · Supply</span><span class="wstep">3 · Purpose</span></div>
+          <label>Coin name <input id="coinName" type="text" value="EssentialCoin" maxlength="24"></label>
+          <label>Ticker symbol <input id="coinTicker" type="text" value="ESS" maxlength="5"></label>
+          <label>Total supply <input id="coinSupply" type="number" value="1000000" min="1" step="1000"></label>
+          <label>Purpose
+            <select id="coinPurpose">
+              <option value="loyalty">Loyalty rewards — earn on every purchase</option>
+              <option value="payment">Store payment — spend it at checkout</option>
+              <option value="both" selected>Both — earn it and spend it</option>
+            </select></label>
+          <button class="btn-primary wide" id="coinSaveBtn">Save coin design</button>
+          <div class="path-result" id="coinResult"></div>
+        </div>
+        <div class="coin-preview-wrap">
+          <div class="coin-card" id="coinCard">
+            <div class="coin-visual"><span id="coinVisualSym">ESS</span></div>
+            <div class="coin-card-name" id="coinCardName">EssentialCoin</div>
+            <div class="coin-card-meta" id="coinCardMeta">ESS · Supply 1,000,000</div>
+            <div class="coin-card-store">Everyday Essentials</div>
+          </div>
+          <div class="coin-explainer" id="coinExplainer"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Workshops -->
+    <div class="glass panel">
+      <h2>🎓 Workshops — Owner Academy</h2>
+      <p class="panel-sub">Video training for running your virtual store — and for where this sector is going. Two workshops are ready to watch; the rest are in production.</p>
+      <div class="ws-grid" id="wsGrid"></div>
+    </div>
+  </section>
+</main>
+
+<!-- ============ CART DRAWER ============ -->
+<div id="cartShade" class="shade hidden"></div>
+<aside id="cartDrawer" class="cart-drawer glass hidden" aria-label="Cart">
+  <div class="cd-head"><h3>🧺 Your cart</h3><button id="cartClose" class="pc-close">✕</button></div>
+  <div id="cartLines"></div>
+  <div class="cd-total">Total <strong id="cartTotal">$0.00</strong></div>
+  <p class="fineprint">Demo checkout — no real charge. Production human rail: Stripe.</p>
+  <button class="btn-primary wide" id="checkoutBtn">Checkout (demo)</button>
+</aside>
+
+<!-- ============ CHECKOUT MODAL ============ -->
+<div id="checkoutModal" class="modal hidden">
+  <div class="modal-card glass">
+    <h3>Demo checkout</h3>
+    <label>Your name <input id="buyerName" type="text" placeholder="e.g. Jordan Rivera" autocomplete="name"></label>
+    <div class="cd-total">Total <strong id="coTotal">$0.00</strong></div>
+    <div class="btn-row">
+      <button class="btn-ghost" id="coCancel">Cancel</button>
+      <button class="btn-primary" id="coPlace">Place order</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ CONFIRMATION ============ -->
+<div id="confirmModal" class="modal hidden">
+  <div class="modal-card glass confirm">
+    <div class="confirm-ico">✅</div>
+    <h3>Order placed!</h3>
+    <div class="confirm-num" id="confirmNum">VS-1001</div>
+    <p id="confirmText">Thanks — your demo order is in the owner's order list.</p>
+    <button class="btn-primary wide" id="confirmOk">Keep shopping</button>
+  </div>
+</div>
+
+<div id="toast" class="toast hidden"></div>
+
+<script src="three.min.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
