@@ -116,8 +116,12 @@ function renderShelfList(){
       const si = stockInfo(it);
       const cell = document.createElement('button');
       cell.className = 'prod-cell';
+      const photo = PRODUCT_PHOTOS[it.sku];
+      const sw = photo
+        ? '<div class="sw has-photo" style="background-color:' + it.color + ';background-image:url(' + photo + ')"></div>'
+        : '<div class="sw" style="background:' + it.color + '">' + esc(it.short || it.name) + '</div>';
       cell.innerHTML =
-        '<div class="sw" style="background:' + it.color + '">' + esc(it.short || it.name) + '</div>' +
+        sw +
         '<div class="inf"><div class="nm">' + esc(it.name) + '</div>' +
         '<div class="pr"><b>' + money(it.price) + '</b><span class="stk ' + si.cls + '">' + si.txt + '</span></div></div>';
       cell.addEventListener('click', ()=>{ flyToAisle(it.aisle); openProduct(it.sku); });
@@ -132,8 +136,19 @@ function openProduct(sku){
   const it = bySku(sku); if (!it) return;
   selectedSku = sku; selectedQty = 1;
   const si = stockInfo(it);
-  $('#pcSwatch').style.background = it.color;
-  $('#pcSwatch').textContent = it.short || it.name;
+  const swEl = $('#pcSwatch');
+  const photo = PRODUCT_PHOTOS[sku];
+  if (photo){
+    swEl.classList.add('has-photo');
+    swEl.style.backgroundColor = it.color;
+    swEl.style.backgroundImage = 'url(' + photo + ')';
+    swEl.textContent = '';
+  } else {
+    swEl.classList.remove('has-photo');
+    swEl.style.backgroundImage = 'none';
+    swEl.style.backgroundColor = it.color;
+    swEl.textContent = it.short || it.name;
+  }
   $('#pcName').textContent = it.name;
   $('#pcSku').textContent = 'SKU ' + it.sku;
   $('#pcUnit').textContent = it.unit || '';
@@ -289,7 +304,7 @@ function applyQuality(){
       if (keyLight.shadow.map){ keyLight.shadow.map.dispose(); keyLight.shadow.map = null; }
     }
   }
-  bloomOn = !!(t.bloom && bloom);
+  bloomOn = !!(t.bloom && bloom && T().bloom);
   resizeScene();
 }
 $$('.qbtn').forEach(b => b.addEventListener('click', ()=>{
@@ -333,6 +348,181 @@ function fpsTick(nowSec){
 }
 qTier = probeStartTier();
 updateQualityBadge();
+
+/* ============================================================
+   STORE THEMES — Neon Tech · Everyday · Luxury
+   One store, one catalog: a theme restyles the ROOM only —
+   floor / walls / shelves, the lighting rig + grade, signage,
+   price tags, decals and accents. Switchable live in the
+   storefront header and in Owner Admin → Create your store;
+   persisted in localStorage + store settings.
+   ============================================================ */
+const THEMES = {
+  neon: {
+    label:'Neon Tech', bg:0x05070f, fog:[0x05070f, 11, 26], exposure:1.02, bloom:true,
+    hemiSky:0xbfe0ff, hemiGround:0x0a0c18, hemiInt:.42,
+    keyColor:0xfff0da, keyInt:1.05, fillColor:0x7fa8ff, fillInt:.32,
+    accents:[0x2ee6ff, 0x8b5cff], accentInt:.6, spots:false,
+    floorKind:'neon', floorRough:.16, floorMetal:.6, floorEnv:1.1,
+    wall:0x080d1d, ceil:0x05080f, panel:0xd9efff, bezel:0x101830,
+    frame:0x1c2742, board:0x232f52, back:0x131c3a,
+    header:0x0d1430, headerGlow:0x123a4d, headerGlowInt:.7, glow:0x2ee6ff,
+    signBg:'#070b1a', signGrad:['#2ee6ff','#8b5cff'], signSub:'#93a4c4', signBorder:'rgba(46,230,255,.6)',
+    tagBg:'#0a1128', tagInk:'#eaf6ff', tagPrice:'#2ee6ff', tagBorder:'rgba(46,230,255,.55)',
+    decalBg:'rgba(8,14,30,.88)', decalInk:'#eaf6ff', decalAccent:'#2ee6ff', decalRingCss:['#2ee6ff','#8b5cff'],
+    streaks:true, streakOpacity:.3, streakColors:[0x2ee6ff, 0x8b5cff]
+  },
+  everyday: {
+    label:'Everyday', bg:0xb9c6d0, fog:[0xb9c6d0, 15, 34], exposure:1.12, bloom:false,
+    hemiSky:0xffffff, hemiGround:0x9aa08c, hemiInt:.85,
+    keyColor:0xfff3dc, keyInt:1.2, fillColor:0xdcebf7, fillInt:.55,
+    accents:[0xffe9a8, 0xd8f3dc], accentInt:.35, spots:false,
+    floorKind:'tile', floorRough:.42, floorMetal:.05, floorEnv:.35,
+    wall:0xdde3e7, ceil:0xf2f4f5, panel:0xffffff, bezel:0xaeb9c0,
+    frame:0xe8edef, board:0xdfe5e8, back:0xc9d3d8,
+    header:0xffffff, headerGlow:0xfff2c4, headerGlowInt:.3, glow:0xffc93c,
+    signBg:'#ffffff', signGrad:['#1668b4','#1f9d66'], signSub:'#54687a', signBorder:'rgba(22,104,180,.55)',
+    tagBg:'#ffffff', tagInk:'#223140', tagPrice:'#d43a2f', tagBorder:'rgba(34,49,64,.3)',
+    decalBg:'rgba(255,255,255,.92)', decalInk:'#223140', decalAccent:'#1668b4', decalRingCss:['#1668b4','#1f9d66'],
+    streaks:false, streakOpacity:0, streakColors:[0xffffff, 0xffffff]
+  },
+  luxury: {
+    label:'Luxury', bg:0x070605, fog:[0x070605, 10, 25], exposure:1.07, bloom:true,
+    hemiSky:0xffe9c4, hemiGround:0x171208, hemiInt:.34,
+    keyColor:0xffe3ae, keyInt:.95, fillColor:0x93a5cc, fillInt:.16,
+    accents:[0xd9b45c, 0xd9b45c], accentInt:.5, spots:true,
+    floorKind:'marble', floorRough:.12, floorMetal:.3, floorEnv:1.25,
+    wall:0x161009, ceil:0x0a0705, panel:0xffe9bb, bezel:0x77602a,
+    frame:0x3a2c1c, board:0x1d150e, back:0x100b07,
+    header:0x120d08, headerGlow:0x59461c, headerGlowInt:.55, glow:0xd9b45c,
+    signBg:'#0a0806', signGrad:['#f7dd8f','#c9930a'], signSub:'#cbb27f', signBorder:'rgba(217,180,92,.65)',
+    tagBg:'#0d0a06', tagInk:'#f3e6c8', tagPrice:'#f5d67b', tagBorder:'rgba(217,180,92,.6)',
+    decalBg:'rgba(12,9,6,.9)', decalInk:'#f3e6c8', decalAccent:'#d9b45c', decalRingCss:['#d9b45c','#d9b45c'],
+    streaks:true, streakOpacity:.16, streakColors:[0xd9b45c, 0xd9b45c]
+  }
+};
+const T = () => THEMES[storeTheme] || THEMES.neon;
+let storeTheme = 'neon';
+try{
+  const savedTheme = (settings && settings.theme) || localStorage.getItem('vrstore_theme_v1');
+  if (savedTheme && THEMES[savedTheme]) storeTheme = savedTheme;
+}catch(e){}
+
+/* shared themed materials + registries (signs / decals / price
+   tags repaint themselves from T() whenever the theme flips) */
+let TM = null;
+const signMats = [];       // {mat, text, sub} — created via makeSignMat
+const decalPainters = [];  // fn() — repaint a floor decal canvas
+let tagPainters = [];      // fn() — repaint a price-tag canvas (rebuilt with products)
+let hemiLight = null, fillLight = null, accentLights = [], spotLights = [];
+let floorMeshRef = null, wallMats = [], ceilMatRef = null, panelMatRef = null, bezelMatRef = null, streakMeshes = [];
+let floorTexNeon = null, floorTexTile = null, floorTexMarble = null;
+function themedMats(){
+  if (TM) return TM;
+  const t = T();
+  TM = {
+    frame:  new THREE.MeshStandardMaterial({color:t.frame, metalness:.85, roughness:.32, envMapIntensity:.45}),
+    board:  new THREE.MeshStandardMaterial({color:t.board, metalness:.6, roughness:.42, envMapIntensity:.45}),
+    back:   new THREE.MeshStandardMaterial({color:t.back, metalness:.35, roughness:.52, envMapIntensity:.3}),
+    header: new THREE.MeshStandardMaterial({color:t.header, emissive:t.headerGlow, emissiveIntensity:t.headerGlowInt, roughness:.5, metalness:.5}),
+    glow:   new THREE.MeshBasicMaterial({color:t.glow})
+  };
+  TM.glow.toneMapped = false;
+  return TM;
+}
+function makeSignMat(text, sub){
+  const mat = new THREE.MeshBasicMaterial({map: signTexture(text, sub)});
+  mat.toneMapped = false;
+  signMats.push({mat, text, sub});
+  return mat;
+}
+function imgTexture(path, rx, ry){
+  const t = new THREE.TextureLoader().load(path);
+  t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(rx, ry);
+  t.anisotropy = maxAniso;
+  if (THREE.sRGBEncoding) t.encoding = THREE.sRGBEncoding;
+  return t;
+}
+function applyTheme(){
+  const t = T();
+  if (hemiLight){ hemiLight.color.set(t.hemiSky); hemiLight.groundColor.set(t.hemiGround); hemiLight.intensity = t.hemiInt; }
+  if (keyLight){ keyLight.color.set(t.keyColor); keyLight.intensity = t.keyInt; }
+  if (fillLight){ fillLight.color.set(t.fillColor); fillLight.intensity = t.fillInt; }
+  accentLights.forEach((p, i) => { p.color.set(t.accents[i % t.accents.length]); p.intensity = t.accentInt; });
+  spotLights.forEach(s => { s.intensity = t.spots ? 1.6 : 0; });
+  if (renderer) renderer.toneMappingExposure = t.exposure;
+  if (scene && settings.mode !== 'scanned'){
+    scene.background = new THREE.Color(t.bg);
+    scene.fog = new THREE.Fog(t.fog[0], t.fog[1], t.fog[2]);
+  }
+  if (floorMeshRef){
+    const m = floorMeshRef.material;
+    m.map = t.floorKind === 'tile' ? floorTexTile : t.floorKind === 'marble' ? floorTexMarble : floorTexNeon;
+    m.roughness = t.floorRough; m.metalness = t.floorMetal; m.needsUpdate = true;
+  }
+  wallMats.forEach(m => m.color.set(t.wall));
+  if (ceilMatRef) ceilMatRef.color.set(t.ceil);
+  if (panelMatRef) panelMatRef.color.set(t.panel);
+  if (bezelMatRef) bezelMatRef.color.set(t.bezel);
+  streakMeshes.forEach((st, i) => {
+    st.visible = t.streaks;
+    st.material.color.set(t.streakColors[i % t.streakColors.length]);
+    st.material.opacity = t.streakOpacity;
+  });
+  if (TM){
+    TM.frame.color.set(t.frame); TM.board.color.set(t.board); TM.back.color.set(t.back);
+    TM.header.color.set(t.header); TM.header.emissive.set(t.headerGlow); TM.header.emissiveIntensity = t.headerGlowInt;
+    TM.glow.color.set(t.glow);
+  }
+  signMats.forEach(s => { const old = s.mat.map; s.mat.map = signTexture(s.text, s.sub); if (old) old.dispose(); s.mat.needsUpdate = true; });
+  decalPainters.forEach(f => f());
+  tagPainters.forEach(f => f());
+  bloomOn = !!(QTIERS[qTier].bloom && bloom && t.bloom);
+  captureEnv();
+}
+function setTheme(name, quiet){
+  if (!THEMES[name]) return;
+  storeTheme = name;
+  settings.theme = name;
+  try{ localStorage.setItem('vrstore_theme_v1', name); }catch(e){}
+  saveLS(LS.set, settings);
+  $$('.tbtn').forEach(b => b.classList.toggle('active', b.dataset.theme === name));
+  const sel = $('#vsTheme'); if (sel) sel.value = name;
+  if (sceneReady) applyTheme();
+  if (!quiet) toast('Store theme: ' + THEMES[name].label + ' 🏬');
+}
+$$('.tbtn').forEach(b => {
+  b.classList.toggle('active', b.dataset.theme === storeTheme);
+  b.addEventListener('click', ()=> setTheme(b.dataset.theme));
+});
+
+/* ---------- product photography — one studio photo per seed SKU.
+   The photo is the package's face; the catalog name / unit / price
+   are still typeset from live catalog data around it, so a shelf
+   label can never disagree with the item's data. Items without a
+   photo (owner-added SKUs) fall back to the procedural art. ------ */
+const PRODUCT_PHOTOS = {};
+SEED.forEach(it => { PRODUCT_PHOTOS[it.sku] = 'products/' + it.sku + '.jpg'; });
+const photoImgs = {};
+function preloadPhotos(){
+  const todo = catalog.filter(it => PRODUCT_PHOTOS[it.sku] && !photoImgs[it.sku]);
+  if (!todo.length) return;
+  let pending = todo.length;
+  const done = () => { if (--pending <= 0){ if (sceneReady) buildProducts(); renderShelfList(); } };
+  todo.forEach(it => {
+    const img = new Image();
+    img.onload = () => { photoImgs[it.sku] = img; done(); };
+    img.onerror = () => done();
+    img.src = PRODUCT_PHOTOS[it.sku];
+  });
+}
+function drawCover(g, img, dx, dy, dw, dh){
+  const ir = img.naturalWidth / img.naturalHeight, r = dw / dh;
+  let sw, sh, sx, sy;
+  if (ir > r){ sh = img.naturalHeight; sw = sh * r; sx = (img.naturalWidth - sw) / 2; sy = 0; }
+  else { sw = img.naturalWidth; sh = sw / r; sx = 0; sy = (img.naturalHeight - sh) / 2; }
+  g.drawImage(img, sx, sy, sw, sh, dx, dy, dw, dh);
+}
 
 /* ---------- procedural packaging — every texture is generated FROM the
    live catalog item (name / short / unit / price / stock / color), so a
@@ -380,6 +570,26 @@ function drawFrontArt(g, it, x, y, w, h, form){
   g.fillStyle = 'rgba(5,10,18,.34)'; g.fillRect(x, y, w, h * .15);
   g.fillStyle = 'rgba(255,255,255,.85)'; g.font = '700 ' + Math.round(h * .052) + 'px system-ui, sans-serif'; g.textAlign = 'center';
   g.fillText('E V E R Y D A Y   E S S E N T I A L S', x + w / 2, y + h * .104);
+  // photo face: the studio product photo fills the middle of the
+  // pack; name / unit / price are still typeset from catalog data
+  const photo = photoImgs[it.sku];
+  if (photo){
+    const px = x + w * .055, py = y + h * .185, pw = w * .89, ph = h * .455;
+    g.fillStyle = 'rgba(255,255,255,.94)'; g.fillRect(px - 4, py - 4, pw + 8, ph + 8);
+    drawCover(g, photo, px, py, pw, ph);
+    if (out){ g.fillStyle = 'rgba(88,94,106,.52)'; g.fillRect(px, py, pw, ph); }
+    g.fillStyle = 'rgba(4,10,16,.92)';
+    let pfs = Math.round(h * .104); g.font = '900 ' + pfs + 'px system-ui, sans-serif';
+    let plines = fitLines(g, (it.short || it.name).toUpperCase(), w * .9, 2);
+    if (plines.length > 1){ pfs = Math.round(pfs * .82); g.font = '900 ' + pfs + 'px system-ui, sans-serif'; plines = fitLines(g, (it.short || it.name).toUpperCase(), w * .9, 2); }
+    plines.forEach((ln, i) => g.fillText(ln, x + w / 2, y + h * .715 + i * pfs * 1.14));
+    g.fillStyle = 'rgba(4,10,16,.62)'; g.font = '600 ' + Math.round(h * .046) + 'px system-ui, sans-serif';
+    g.fillText((it.unit || '').toUpperCase(), x + w / 2, y + h * .715 + plines.length * pfs * 1.14 + h * .055);
+    g.fillStyle = 'rgba(4,10,16,.92)'; g.fillRect(x, y + h * .845, w, h * .155);
+    g.fillStyle = out ? '#ff8fa3' : '#2ee6ff'; g.font = '800 ' + Math.round(h * .092) + 'px system-ui, sans-serif';
+    g.fillText(out ? 'OUT OF STOCK' : '$' + Number(it.price).toFixed(2), x + w / 2, y + h * .952);
+    return;
+  }
   // motif (behind the badge)
   g.strokeStyle = 'rgba(255,255,255,.20)'; g.lineWidth = Math.max(2, h * .01);
   if (form === 'bag'){ for (let i = 0; i < 5; i++){ g.beginPath(); g.moveTo(x + w * (.10 + i * .18), y + h * .20); g.lineTo(x + w * (.30 + i * .18), y + h * .64); g.stroke(); } }
@@ -494,6 +704,19 @@ function rollWrapTexture(it){
   const [c, g] = mkCanvas(1024, 512);
   const out = it.stock <= 0; const base = out ? '#5a5f6a' : it.color;
   g.fillStyle = '#f0eee6'; g.fillRect(0, 0, 1024, 512);
+  const photo = photoImgs[it.sku];
+  if (photo){
+    drawCover(g, photo, 0, 92, 1024, 252);
+    if (out){ g.fillStyle = 'rgba(88,94,106,.5)'; g.fillRect(0, 92, 1024, 252); }
+    g.fillStyle = 'rgba(4,10,16,.55)'; g.font = '700 24px system-ui, sans-serif'; g.textAlign = 'center';
+    g.fillText('E V E R Y D A Y   E S S E N T I A L S', 512, 66);
+    g.fillStyle = 'rgba(4,10,16,.92)'; g.font = '900 66px system-ui, sans-serif';
+    fitLines(g, (it.short || it.name).toUpperCase(), 940, 1).forEach(ln => g.fillText(ln, 512, 428));
+    g.fillStyle = 'rgba(4,10,16,.78)'; g.font = '700 36px system-ui, sans-serif';
+    g.fillText((it.unit || '').toUpperCase() + '  ·  $' + Number(it.price).toFixed(2), 512, 478);
+    if (out){ g.fillStyle = '#ff8fa3'; g.font = '900 54px system-ui, sans-serif'; g.fillText('OUT OF STOCK', 512, 236); }
+    return ctex(c);
+  }
   g.fillStyle = base; g.fillRect(0, 120, 1024, 158);
   g.fillStyle = 'rgba(4,10,16,.92)'; g.font = '900 72px system-ui, sans-serif'; g.textAlign = 'center';
   fitLines(g, (it.short || it.name).toUpperCase(), 940, 1).forEach(ln => g.fillText(ln, 512, 226));
@@ -515,16 +738,17 @@ function rollCapTexture(){
   return ctex(c);
 }
 function signTexture(text, sub){
+  const t = T();
   const c = document.createElement('canvas'); c.width = 1024; c.height = 256;
   const g = c.getContext('2d');
-  g.fillStyle = '#070b1a'; g.fillRect(0,0,1024,256);
+  g.fillStyle = t.signBg; g.fillRect(0,0,1024,256);
   const grad = g.createLinearGradient(0,0,1024,0);
-  grad.addColorStop(0,'#2ee6ff'); grad.addColorStop(1,'#8b5cff');
+  grad.addColorStop(0, t.signGrad[0]); grad.addColorStop(1, t.signGrad[1]);
   g.fillStyle = grad; g.font = '900 92px system-ui, sans-serif'; g.textAlign = 'center';
   g.fillText(text, 512, 118);
-  g.fillStyle = '#93a4c4'; g.font = '600 44px system-ui, sans-serif';
+  g.fillStyle = t.signSub; g.font = '600 44px system-ui, sans-serif';
   g.fillText(sub || '', 512, 196);
-  g.strokeStyle = 'rgba(46,230,255,.6)'; g.lineWidth = 6; g.strokeRect(8,8,1008,240);
+  g.strokeStyle = t.signBorder; g.lineWidth = 6; g.strokeRect(8,8,1008,240);
   return ctex(c);
 }
 function rrPath(g, x, y, w, h, r){
@@ -549,33 +773,47 @@ function floorTexture(){
 
 function buildShelfUnit(x, facing /* +1 faces +x, -1 faces -x */){
   const unit = new THREE.Group();
-  const frameMat = new THREE.MeshStandardMaterial({color:0x1c2742, metalness:.8, roughness:.3, envMapIntensity:.45});
-  const boardMat = new THREE.MeshStandardMaterial({color:0x232f52, metalness:.7, roughness:.42, envMapIntensity:.45});
-  const glowMat  = new THREE.MeshBasicMaterial({color:0x2ee6ff});
-  glowMat.toneMapped = false;
+  const M = themedMats();
+  const frameMat = M.frame, boardMat = M.board, glowMat = M.glow;
   // uprights
   [-2.3, 2.3].forEach(z => {
     const up = new THREE.Mesh(new THREE.BoxGeometry(.12, 2.4, .12), frameMat);
     up.position.set(0, 1.2, z); up.castShadow = true; unit.add(up);
   });
   // back panel
-  const back = new THREE.Mesh(new THREE.BoxGeometry(.06, 2.4, 4.8),
-    new THREE.MeshStandardMaterial({color:0x131c3a, metalness:.35, roughness:.52, envMapIntensity:.3}));
+  const back = new THREE.Mesh(new THREE.BoxGeometry(.06, 2.4, 4.8), M.back);
   back.position.set(-facing * .34, 1.2, 0); back.receiveShadow = true; unit.add(back);
-  // shelf boards + glow strips at 3 levels
+  // shelf boards + glow strips + price-tag rail at 3 levels
   [0.42, 1.12, 1.82].forEach(y => {
     const board = new THREE.Mesh(new THREE.BoxGeometry(.78, .06, 4.8), boardMat);
     board.position.set(0, y, 0); board.receiveShadow = true; board.castShadow = true; unit.add(board);
     const strip = new THREE.Mesh(new THREE.BoxGeometry(.8, .025, 4.8), glowMat);
     strip.position.set(0, y - .055, 0); unit.add(strip);
+    const rail = new THREE.Mesh(new THREE.BoxGeometry(.05, .05, 4.8), frameMat);
+    rail.position.set(facing * .40, y - .01, 0); unit.add(rail);
   });
-  const header = new THREE.Mesh(new THREE.BoxGeometry(.5, .34, 4.8),
-    new THREE.MeshStandardMaterial({color:0x0d1430, emissive:0x123a4d, emissiveIntensity:.7, roughness:.5, metalness:.5}));
+  const header = new THREE.Mesh(new THREE.BoxGeometry(.5, .34, 4.8), M.header);
   header.position.set(0, 2.32, 0); unit.add(header);
   unit.position.x = x;
   if (facing < 0) unit.rotation.y = Math.PI;
   return unit;
 }
+
+/* texture cache — shelf facings share one canvas texture per SKU,
+   so a denser shelf doesn't multiply GPU memory. The key carries
+   every field the art is drawn from, so editing an item re-keys
+   its art and the shelf redraws itself. */
+const texCache = new Map();
+const cachedTexSet = new Set();
+function texKey(it, kind){
+  return kind + '|' + it.sku + '|' + it.name + '|' + it.short + '|' + it.unit + '|' +
+    it.price + '|' + (it.stock <= 0) + '|' + it.color + '|' + (photoImgs[it.sku] ? 'ph' : 'np');
+}
+function cachedTex(key, maker){
+  if (!texCache.has(key)){ const t = maker(); texCache.set(key, t); cachedTexSet.add(t); }
+  return texCache.get(key);
+}
+let rollCapTexShared = null;
 
 /* one product as a small group of meshes, silhouette by category.
    Origin at the product's base; front art faces local +x (or local −x
@@ -587,7 +825,7 @@ function buildProductGroup(it, facing){
   const grp = new THREE.Group();
   const add = m => { m.castShadow = true; m.receiveShadow = true; grp.add(m); return m; };
   if (form === 'jar' || form === 'bottle' || form === 'spray'){
-    const wrap = wrapTexture(it, form, facing < 0);
+    const wrap = cachedTex(texKey(it, 'wrap' + (facing < 0 ? 'f' : 'n')), () => wrapTexture(it, form, facing < 0));
     const wrapMat = new THREE.MeshStandardMaterial({map: wrap, roughness:.3, metalness:.06, envMapIntensity:.45,
       emissive: 0x666666, emissiveMap: wrap, emissiveIntensity: out ? .22 : .42});
     const plainMat = new THREE.MeshStandardMaterial({color: new THREE.Color(shadeOf(base, .8)), roughness:.48, metalness:.18, envMapIntensity:.35});
@@ -616,7 +854,8 @@ function buildProductGroup(it, facing){
       nozzle.position.set(0, .53, .06);
     }
   } else if (form === 'rolls'){
-    const wrap = rollWrapTexture(it), cap = rollCapTexture();
+    const wrap = cachedTex(texKey(it, 'roll'), () => rollWrapTexture(it));
+    const cap = rollCapTexShared || (rollCapTexShared = rollCapTexture());
     const wm = new THREE.MeshStandardMaterial({map: wrap, roughness:.62, metalness:0, envMapIntensity:.3,
       emissive: 0x555555, emissiveMap: wrap, emissiveIntensity: out ? .18 : .32});
     const cm = new THREE.MeshStandardMaterial({map: cap, roughness:.72, metalness:0, envMapIntensity:.25});
@@ -625,11 +864,11 @@ function buildProductGroup(it, facing){
       roll.position.set(0, .28, dz);
     });
   } else { /* box family: box / bag (jittered) / tube (slim) */
-    const front = frontTexture(it, form);
+    const front = cachedTex(texKey(it, 'front'), () => frontTexture(it, form));
     const frontMat = new THREE.MeshStandardMaterial({map: front, roughness:.46, metalness:.06, envMapIntensity:.4,
       emissive: 0x777777, emissiveMap: front, emissiveIntensity: out ? .28 : .52});
-    const sideMatT = new THREE.MeshStandardMaterial({map: sideTexture(it), roughness:.55, metalness:.05, envMapIntensity:.3});
-    const topMat = new THREE.MeshStandardMaterial({map: topTexture(it), roughness:.55, metalness:.05, envMapIntensity:.3});
+    const sideMatT = new THREE.MeshStandardMaterial({map: cachedTex(texKey(it, 'side'), () => sideTexture(it)), roughness:.55, metalness:.05, envMapIntensity:.3});
+    const topMat = new THREE.MeshStandardMaterial({map: cachedTex(texKey(it, 'top'), () => topTexture(it)), roughness:.55, metalness:.05, envMapIntensity:.3});
     const plainMat = new THREE.MeshStandardMaterial({color: new THREE.Color(shadeOf(base, .6)), roughness:.6, metalness:.1, envMapIntensity:.3});
     const dims = form === 'tube' ? [.42, .5, .68] : [.54, .62, .92];
     const seg = form === 'bag' ? 3 : 1;
@@ -653,20 +892,50 @@ function buildProductGroup(it, facing){
   return grp;
 }
 
+/* shelf-edge price tag for one slot — name + price typeset from
+   live catalog data onto the shelf rail, repainted on theme flips.
+   In this layout every product front faces world +x (pass-1
+   convention for both shelf facings), so tags mount on the +x
+   rail, facing +x, directly under the fronts they name. */
+function priceTagMesh(it){
+  const [c, g] = mkCanvas(256, 56);
+  const tex = ctex(c);
+  const paint = () => {
+    const t = T();
+    g.clearRect(0, 0, 256, 56);
+    g.fillStyle = t.tagBg; g.fillRect(0, 0, 256, 56);
+    g.strokeStyle = t.tagBorder; g.lineWidth = 3; g.strokeRect(2, 2, 252, 52);
+    g.textAlign = 'left'; g.fillStyle = t.tagInk;
+    g.font = '700 20px system-ui, sans-serif';
+    g.fillText((it.short || it.name).toUpperCase(), 11, 36, 148);
+    g.textAlign = 'right'; g.fillStyle = it.stock <= 0 ? '#ff5d7a' : t.tagPrice;
+    g.font = '900 25px system-ui, sans-serif';
+    g.fillText(it.stock <= 0 ? 'OUT' : '$' + Number(it.price).toFixed(2), 245, 38);
+    tex.needsUpdate = true;
+  };
+  paint();
+  tagPainters.push(paint);
+  const mesh = new THREE.Mesh(new THREE.PlaneGeometry(.66, .145),
+    new THREE.MeshBasicMaterial({map: tex}));
+  mesh.rotation.y = Math.PI / 2;
+  return mesh;
+}
+
 function buildProducts(){
   if (productGroup) {
     productGroup.traverse(o => {
       if (o.isMesh) {
         o.geometry.dispose();
         (Array.isArray(o.material) ? o.material : [o.material]).forEach(m => {
-          if (m.map) m.map.dispose();
-          if (m.emissiveMap) m.emissiveMap.dispose();
+          if (m.map && !cachedTexSet.has(m.map)) m.map.dispose();
+          if (m.emissiveMap && m.emissiveMap !== m.map && !cachedTexSet.has(m.emissiveMap)) m.emissiveMap.dispose();
           m.dispose();
         });
       }
     });
     scene.remove(productGroup);
   }
+  tagPainters = [];
   productGroup = new THREE.Group();
   const levels = [0.42, 1.12, 1.82];
   const place = (grp, it, x, y, z, rotY) => {
@@ -686,7 +955,21 @@ function buildProducts(){
       const z = (j % 2 === 0 ? -1.15 : 1.15);
       const x = ax + side * 1.55;
       const facing = side < 0 ? 1 : -1;              // face the aisle walkway
-      place(buildProductGroup(it, facing), it, x, level + .03, z, facing < 0 ? Math.PI : 0);
+      // dense facings: a real shelf carries multiples of each item,
+      // shoulder to shoulder along the slot — count by footprint
+      const form = formOf(it);
+      const FORM_Z = {box:.92, bag:.92, tube:.68, jar:.40, bottle:.38, spray:.34, rolls:.64};
+      const FACINGS = {box:2, bag:2, tube:3, jar:4, bottle:4, spray:4, rolls:2};
+      const n = FACINGS[form] || 2;
+      const step = (FORM_Z[form] || .6) + .06;
+      for (let k = 0; k < n; k++){
+        const zk = z + (k - (n - 1) / 2) * step;
+        place(buildProductGroup(it, facing), it, x, level + .03, zk, facing < 0 ? Math.PI : 0);
+      }
+      // shelf-edge price tag under the slot, on the +x rail
+      const tag = priceTagMesh(it);
+      tag.position.set(x + .45, level - .01, z);
+      productGroup.add(tag);
     });
     // end-cap display at the far end of the aisle: first 3 items, mini,
     // fronts turned toward the entrance so shoppers meet them head-on
@@ -726,10 +1009,14 @@ function initScene(){
   camLookCur = new THREE.Vector3(...VIEWS.entrance.look);
   flyTo('entrance');
 
-  // lights — cinematic retail: warm key with soft shadows, cool fill,
-  // colored aisle accents. (Quality tiers steer shadow size + on/off.)
-  scene.add(new THREE.HemisphereLight(0xbfe0ff, 0x0a0c18, .42));
-  keyLight = new THREE.DirectionalLight(0xfff0da, 1.05);
+  // lights — the theme's rig: hemisphere wash, warm key with soft
+  // shadows, cool fill, colored aisle accents, plus spotlights
+  // that only the Luxury theme switches on (pools of light).
+  // (Quality tiers steer shadow size + on/off.)
+  const t0 = T();
+  hemiLight = new THREE.HemisphereLight(t0.hemiSky, t0.hemiGround, t0.hemiInt);
+  scene.add(hemiLight);
+  keyLight = new THREE.DirectionalLight(t0.keyColor, t0.keyInt);
   keyLight.position.set(5, 8.5, 6);
   keyLight.castShadow = true;
   keyLight.shadow.mapSize.set(1024, 1024);
@@ -738,17 +1025,32 @@ function initScene(){
   keyLight.shadow.camera.near = 1; keyLight.shadow.camera.far = 28;
   keyLight.shadow.bias = -0.0004; keyLight.shadow.normalBias = .02;
   scene.add(keyLight);
-  const fill = new THREE.DirectionalLight(0x7fa8ff, .32);
-  fill.position.set(-6, 4.5, -4); scene.add(fill);
-  [[-3.4, 0x2ee6ff], [3.4, 0x8b5cff]].forEach(([x, col]) => {
-    const p = new THREE.PointLight(col, .6, 11); p.position.set(x, 2.9, 0); scene.add(p);
+  fillLight = new THREE.DirectionalLight(t0.fillColor, t0.fillInt);
+  fillLight.position.set(-6, 4.5, -4); scene.add(fillLight);
+  accentLights = [];
+  [[-3.4], [3.4]].forEach(([x], i) => {
+    const p = new THREE.PointLight(t0.accents[i % t0.accents.length], t0.accentInt, 11);
+    p.position.set(x, 2.9, 0); scene.add(p); accentLights.push(p);
+  });
+  spotLights = [];
+  [[-3.4, 0], [3.4, 0], [5.9, 5.2]].forEach(([x, z]) => {
+    const s = new THREE.SpotLight(0xffd9a0, 0, 11, .58, .9, 1);
+    s.position.set(x, 3.5, z);
+    s.target.position.set(x, 0, z);
+    scene.add(s); scene.add(s.target);
+    spotLights.push(s);
   });
 
-  // floor — dark, polished: low roughness + env map give it sheen and
-  // streaky reflections of the aisle lighting
+  // floor — one mesh, three skins: procedural neon tile, photo
+  // grocery tile (Everyday), photo black marble (Luxury). The
+  // theme sets roughness/metalness so each reads true.
+  floorTexNeon = floorTexture();
+  floorTexTile = imgTexture('textures/floor-tile.jpg', 6, 8);
+  floorTexMarble = imgTexture('textures/floor-marble.jpg', 5, 7);
   const floor = new THREE.Mesh(new THREE.PlaneGeometry(16, 22),
-    new THREE.MeshStandardMaterial({map: floorTexture(), roughness:.16, metalness:.6, envMapIntensity:1.1}));
+    new THREE.MeshStandardMaterial({map: floorTexNeon, roughness:.16, metalness:.6, envMapIntensity:1.1}));
   floor.rotation.x = -Math.PI / 2; floor.receiveShadow = true; floor.name = 'floorMesh';
+  floorMeshRef = floor;
   scene.add(floor);
 
   // fake neon floor reflections: additive gradient streaks under the
@@ -757,41 +1059,50 @@ function initScene(){
     const gr = g.createLinearGradient(0, 0, 128, 0);
     gr.addColorStop(0, 'rgba(255,255,255,0)'); gr.addColorStop(.5, 'rgba(255,255,255,.85)'); gr.addColorStop(1, 'rgba(255,255,255,0)');
     g.fillStyle = gr; g.fillRect(0, 0, 128, 256); return ctex(c); })();
+  streakMeshes = [];
   [[-4.95, 0x2ee6ff], [-1.85, 0x2ee6ff], [1.85, 0x8b5cff], [4.95, 0x8b5cff]].forEach(([x, col]) => {
     const st = new THREE.Mesh(new THREE.PlaneGeometry(.55, 4.8),
       new THREE.MeshBasicMaterial({map: streakTex, color: col, transparent: true, opacity: .3, blending: THREE.AdditiveBlending, depthWrite: false}));
     st.material.toneMapped = false;
     st.rotation.x = -Math.PI / 2; st.position.set(x, .006, 0); st.renderOrder = 1; scene.add(st);
+    streakMeshes.push(st);
   });
 
-  // floor decals: entrance welcome mat + aisle number discs
-  function decalTex(w, h, draw){ const [c, g] = mkCanvas(w, h); draw(g, w, h); return ctex(c); }
-  const matDecal = new THREE.Mesh(new THREE.PlaneGeometry(4.8, 1.2),
-    new THREE.MeshBasicMaterial({map: decalTex(1024, 256, (g, w, h) => {
-      g.clearRect(0, 0, w, h);
-      rrPath(g, 10, 10, w - 20, h - 20, 30); g.fillStyle = 'rgba(8,14,30,.88)'; g.fill();
-      g.lineWidth = 4; g.strokeStyle = 'rgba(46,230,255,.75)'; g.stroke();
-      g.fillStyle = '#dff6ff'; g.font = '900 62px system-ui, sans-serif'; g.textAlign = 'center';
-      g.fillText('EVERYDAY ESSENTIALS', w / 2, h / 2 - 2);
-      g.fillStyle = '#2ee6ff'; g.font = '700 33px system-ui, sans-serif';
-      g.fillText('HUMANS + AGENTS WELCOME', w / 2, h / 2 + 52);
-    }), transparent: true, depthWrite: false, opacity: .96}));
-  matDecal.material.toneMapped = false;
-  matDecal.rotation.x = -Math.PI / 2; matDecal.position.set(0, .012, 5.6); matDecal.renderOrder = 2; scene.add(matDecal);
+  // floor decals: entrance welcome mat + aisle number discs.
+  // Painters close over their canvas so a theme flip repaints them.
+  function makeDecalMesh(pw, ph, cw, ch, draw, opacity){
+    const [c, g] = mkCanvas(cw, ch);
+    const tex = ctex(c);
+    const paint = () => { g.clearRect(0, 0, cw, ch); draw(g, cw, ch, T()); tex.needsUpdate = true; };
+    paint(); decalPainters.push(paint);
+    const mat = new THREE.MeshBasicMaterial({map: tex, transparent: true, depthWrite: false, opacity: opacity == null ? 1 : opacity});
+    mat.toneMapped = false;
+    const mesh = new THREE.Mesh(new THREE.PlaneGeometry(pw, ph), mat);
+    mesh.rotation.x = -Math.PI / 2; mesh.renderOrder = 2;
+    return mesh;
+  }
+  const matDecal = makeDecalMesh(4.8, 1.2, 1024, 256, (g, w, h, t) => {
+    rrPath(g, 10, 10, w - 20, h - 20, 30); g.fillStyle = t.decalBg; g.fill();
+    g.lineWidth = 4; g.strokeStyle = t.decalAccent; g.stroke();
+    g.fillStyle = t.decalInk; g.font = '900 62px system-ui, sans-serif'; g.textAlign = 'center';
+    g.fillText('EVERYDAY ESSENTIALS', w / 2, h / 2 - 2);
+    g.fillStyle = t.decalAccent; g.font = '700 33px system-ui, sans-serif';
+    g.fillText('HUMANS + AGENTS WELCOME', w / 2, h / 2 + 52);
+  }, .96);
+  matDecal.position.set(0, .012, 5.6); scene.add(matDecal);
   [1, 2].forEach(a => {
-    const disc = new THREE.Mesh(new THREE.PlaneGeometry(1.15, 1.15),
-      new THREE.MeshBasicMaterial({map: decalTex(256, 256, (g) => {
-        g.beginPath(); g.arc(128, 128, 112, 0, Math.PI * 2); g.fillStyle = 'rgba(8,14,30,.85)'; g.fill();
-        g.lineWidth = 8; g.strokeStyle = a === 1 ? '#2ee6ff' : '#8b5cff'; g.stroke();
-        g.fillStyle = '#eaf6ff'; g.font = '900 128px system-ui, sans-serif'; g.textAlign = 'center';
-        g.fillText(String(a), 128, 172);
-      }), transparent: true, depthWrite: false}));
-    disc.material.toneMapped = false;
-    disc.rotation.x = -Math.PI / 2; disc.position.set(a === 1 ? -3.4 : 3.4, .012, 3.9); disc.renderOrder = 2; scene.add(disc);
+    const disc = makeDecalMesh(1.15, 1.15, 256, 256, (g, w, h, t) => {
+      g.beginPath(); g.arc(128, 128, 112, 0, Math.PI * 2); g.fillStyle = t.decalBg; g.fill();
+      g.lineWidth = 8; g.strokeStyle = t.decalRingCss[a - 1]; g.stroke();
+      g.fillStyle = t.decalInk; g.font = '900 128px system-ui, sans-serif'; g.textAlign = 'center';
+      g.fillText(String(a), 128, 172);
+    });
+    disc.position.set(a === 1 ? -3.4 : 3.4, .012, 3.9); scene.add(disc);
   });
 
   // room shell: back + side walls so light has somewhere to land
-  const wallMat = new THREE.MeshStandardMaterial({color:0x080d1d, roughness:.85, metalness:.1});
+  const wallMat = new THREE.MeshStandardMaterial({color:T().wall, roughness:.85, metalness:.1});
+  wallMats = [wallMat];
   const backWall = new THREE.Mesh(new THREE.PlaneGeometry(17, 3.8), wallMat);
   backWall.position.set(0, 1.9, -7.9); backWall.receiveShadow = true; scene.add(backWall);
   [-8.3, 8.3].forEach(x => {
@@ -801,10 +1112,13 @@ function initScene(){
   });
   // ceiling with glowing light panels over the aisles
   const ceil = new THREE.Mesh(new THREE.PlaneGeometry(17, 22),
-    new THREE.MeshStandardMaterial({color:0x05080f, roughness:.95, metalness:.1}));
+    new THREE.MeshStandardMaterial({color:T().ceil, roughness:.95, metalness:.1}));
   ceil.rotation.x = Math.PI / 2; ceil.position.y = 3.62; scene.add(ceil);
-  const panelMat = new THREE.MeshBasicMaterial({color:0xd9efff}); panelMat.toneMapped = false;
-  const bezelMat = new THREE.MeshStandardMaterial({color:0x101830, roughness:.6, metalness:.4});
+  ceilMatRef = ceil.material;
+  const panelMat = new THREE.MeshBasicMaterial({color:T().panel}); panelMat.toneMapped = false;
+  panelMatRef = panelMat;
+  const bezelMat = new THREE.MeshStandardMaterial({color:T().bezel, roughness:.6, metalness:.4});
+  bezelMatRef = bezelMat;
   [-3.4, 0, 3.4].forEach(x => [-5.2, -1.2, 2.8].forEach(z => {
     const bez = new THREE.Mesh(new THREE.BoxGeometry(1.2, .05, 3.0), bezelMat);
     bez.position.set(x, 3.6, z); scene.add(bez);
@@ -814,7 +1128,7 @@ function initScene(){
 
   // end-cap display bases at the far end of each aisle (minis land in
   // buildProducts; bases + promo signs live here as static dressing)
-  const capFrameMat = new THREE.MeshStandardMaterial({color:0x1c2742, metalness:.75, roughness:.35});
+  const capFrameMat = themedMats().frame;
   [1, 2].forEach(a => {
     const ax = a === 1 ? -3.4 : 3.4;
     const baseM = new THREE.Mesh(new THREE.BoxGeometry(1.9, .8, .85), capFrameMat);
@@ -823,9 +1137,8 @@ function initScene(){
       const post = new THREE.Mesh(new THREE.BoxGeometry(.06, .62, .06), capFrameMat);
       post.position.set(ax + dx, 1.11, -3.14); scene.add(post);
     });
-    const capSignMat = new THREE.MeshBasicMaterial({map: signTexture(a === 1 ? 'PANTRY PICKS' : 'HOME ESSENTIALS', 'END CAP · FRESH DEALS')});
-    capSignMat.toneMapped = false;
-    const capSign = new THREE.Mesh(new THREE.PlaneGeometry(2.0, .5), capSignMat);
+    const capSign = new THREE.Mesh(new THREE.PlaneGeometry(2.0, .5),
+      makeSignMat(a === 1 ? 'PANTRY PICKS' : 'HOME ESSENTIALS', 'END CAP · FRESH DEALS'));
     capSign.position.set(ax, 1.68, -3.11); scene.add(capSign);
   });
 
@@ -834,20 +1147,62 @@ function initScene(){
     const ax = a === 1 ? -3.4 : 3.4;
     scene.add(buildShelfUnit(ax - 1.55, 1));
     scene.add(buildShelfUnit(ax + 1.55, -1));
-    const signMat = new THREE.MeshBasicMaterial({map: signTexture(a === 1 ? 'AISLE 1' : 'AISLE 2', a === 1 ? 'PANTRY STAPLES' : 'HOME & CARE'), transparent:false});
-    signMat.toneMapped = false;
-    const sign = new THREE.Mesh(new THREE.PlaneGeometry(3.6, .9), signMat);
+    const sign = new THREE.Mesh(new THREE.PlaneGeometry(3.6, .9),
+      makeSignMat(a === 1 ? 'AISLE 1' : 'AISLE 2', a === 1 ? 'PANTRY STAPLES' : 'HOME & CARE'));
     sign.position.set(ax, 3.0, -3.4); scene.add(sign);
+    // hanging aisle sign over the walkway — two faces back to back
+    // on rods, the way real stores hang them
+    const hangMat = makeSignMat(a === 1 ? 'AISLE 1' : 'AISLE 2', a === 1 ? 'PANTRY STAPLES' : 'HOME & CARE');
+    const hang1 = new THREE.Mesh(new THREE.PlaneGeometry(2.7, .68), hangMat);
+    hang1.position.set(ax, 2.84, .9); scene.add(hang1);
+    const hang2 = hang1.clone(); hang2.rotation.y = Math.PI; scene.add(hang2);
+    [-1.1, 1.1].forEach(dx => {
+      const rod = new THREE.Mesh(new THREE.CylinderGeometry(.014, .014, .46, 8), capFrameMat);
+      rod.position.set(ax + dx, 3.4, .9); scene.add(rod);
+    });
   });
   // entrance hero sign
-  const heroMat = new THREE.MeshBasicMaterial({map: signTexture('EVERYDAY ESSENTIALS', 'OPEN TO HUMANS + AGENTS')});
-  heroMat.toneMapped = false;
-  const hero = new THREE.Mesh(new THREE.PlaneGeometry(6.4, 1.6), heroMat);
+  const hero = new THREE.Mesh(new THREE.PlaneGeometry(6.4, 1.6),
+    makeSignMat('EVERYDAY ESSENTIALS', 'OPEN TO HUMANS + AGENTS'));
   hero.position.set(0, 3.3, -7.2); scene.add(hero);
 
+  // checkout zone — counter + register screen + an agent-pay
+  // kiosk by the entrance, so the room reads as a working store
+  const ck = new THREE.Group();
+  const ckBody = new THREE.Mesh(new THREE.BoxGeometry(2.4, 1.0, .85), themedMats().board);
+  ckBody.position.y = .5; ckBody.castShadow = true; ckBody.receiveShadow = true; ck.add(ckBody);
+  const ckTop = new THREE.Mesh(new THREE.BoxGeometry(2.6, .07, 1.0), themedMats().frame);
+  ckTop.position.y = 1.03; ckTop.castShadow = true; ck.add(ckTop);
+  const regBase = new THREE.Mesh(new THREE.BoxGeometry(.4, .16, .34), themedMats().frame);
+  regBase.position.set(-.6, 1.14, -.18); ck.add(regBase);
+  const regScreen = new THREE.Mesh(new THREE.PlaneGeometry(.92, .23),
+    makeSignMat('CHECKOUT', 'CARD · CASH · AGENT PAY'));
+  regScreen.position.set(-.6, 1.38, -.2); regScreen.rotation.x = -.28; ck.add(regScreen);
+  const kioskPost = new THREE.Mesh(new THREE.BoxGeometry(.12, 1.18, .12), themedMats().frame);
+  kioskPost.position.set(.85, .59, .1); ck.add(kioskPost);
+  const kioskScreen = new THREE.Mesh(new THREE.PlaneGeometry(.84, .21),
+    makeSignMat('AGENT PAY', 'x402 · USDC · INSTANT'));
+  kioskScreen.position.set(.85, 1.32, .08); kioskScreen.rotation.x = -.3; ck.add(kioskScreen);
+  [-.95, .95].forEach(dx => {
+    const bol = new THREE.Mesh(new THREE.CylinderGeometry(.05, .06, .92, 12), themedMats().frame);
+    bol.position.set(dx, .46, 1.35); bol.castShadow = true; ck.add(bol);
+  });
+  const ckSignMat = makeSignMat('CHECKOUT', 'SELF + ASSISTED');
+  const ckSign1 = new THREE.Mesh(new THREE.PlaneGeometry(2.3, .58), ckSignMat);
+  ckSign1.position.set(0, 2.62, 0); ck.add(ckSign1);
+  const ckSign2 = ckSign1.clone(); ckSign2.rotation.y = Math.PI; ck.add(ckSign2);
+  [-1.0, 1.0].forEach(dx => {
+    const rod = new THREE.Mesh(new THREE.CylinderGeometry(.014, .014, .66, 8), themedMats().frame);
+    rod.position.set(dx, 3.26, 0); ck.add(rod);
+  });
+  ck.position.set(5.9, 0, 5.6);
+  ck.rotation.y = -.42;
+  scene.add(ck);
+
   buildProducts();
-  captureEnv();
   initBloom();
+  applyTheme();
+  preloadPhotos();
 
   raycaster = new THREE.Raycaster(); pointerV = new THREE.Vector2();
   const el = renderer.domElement;
@@ -946,7 +1301,7 @@ function captureEnv(){
     scene.traverse(o => {
       if (!o.isMesh) return;
       (Array.isArray(o.material) ? o.material : [o.material]).forEach(m => {
-        if (m && 'envMapIntensity' in m) m.envMapIntensity = (o.name === 'floorMesh') ? 1.1 : .28;
+        if (m && 'envMapIntensity' in m) m.envMapIntensity = (o.name === 'floorMesh') ? T().floorEnv : .28;
       });
     });
   }catch(e){ /* env reflections are a garnish, never a blocker */ }
@@ -1021,8 +1376,8 @@ function applyBackdrop(){
     new THREE.TextureLoader().load(settings.backdrop, tex => { scene.background = tex; scene.fog = null; });
     $('#hudModeChip').textContent = 'SCANNED STORE · YOUR SPACE';
   } else {
-    scene.background = new THREE.Color(0x05070f);
-    scene.fog = new THREE.Fog(0x05070f, 11, 26);
+    scene.background = new THREE.Color(T().bg);
+    scene.fog = new THREE.Fog(T().fog[0], T().fog[1], T().fog[2]);
     $('#hudModeChip').textContent = 'VIRTUAL STORE';
   }
 }
@@ -1155,6 +1510,7 @@ $('#vsApplyBtn').addEventListener('click', ()=>{
   settings.realAddress = $('#vsRealAddr').value.trim();
   settings.backdrop = null;
   saveLS(LS.set, settings);
+  setTheme($('#vsTheme').value, true);
   renderStoreHeader(); applyBackdrop();
   $('#vsResult').innerHTML = '✅ Virtual address assigned: <b>' + esc(storeAddressLine()) +
     '</b><br>Shareable store URL: <b>' + esc(storeURL()) + '</b>' +

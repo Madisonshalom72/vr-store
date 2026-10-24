@@ -67,6 +67,14 @@ code{color:var(--cyan); font-size:.85em}
 .qbtn:hover{color:var(--ink)}
 .qbtn.active{background:var(--grad); color:#051019; font-weight:700}
 .q-eff{font-size:.64rem; font-weight:800; letter-spacing:1.2px; color:var(--cyan); padding:0 7px 0 4px; white-space:nowrap}
+.theme-ctl{display:flex; align-items:center; gap:3px; background:rgba(10,16,34,.6);
+  border:1px solid rgba(120,200,255,.25); border-radius:99px; padding:4px}
+.tbtn{background:transparent; border:1px solid transparent; border-radius:99px;
+  padding:5px 10px; font-size:.74rem; color:var(--ink-dim); transition:.2s; white-space:nowrap}
+.tbtn:hover{color:var(--ink)}
+.tbtn.active{background:var(--grad); color:#051019; font-weight:700}
+.pc-swatch.has-photo{height:180px; background-size:cover; background-position:center}
+.prod-cell .sw.has-photo{height:84px; background-size:cover; background-position:center}
 .cart-btn{background:rgba(10,16,34,.6); border:1px solid rgba(46,255,178,.4); border-radius:99px; padding:8px 14px}
 .cart-count{display:inline-grid; place-items:center; min-width:21px; height:21px; border-radius:99px;
   background:var(--mint); color:#04231a; font-weight:800; font-size:.75rem; padding:0 5px}

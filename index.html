@@ -32,6 +32,11 @@
     <button class="qbtn" data-q="4k">4K</button>
     <span class="q-eff" id="qEff">HD</span>
   </div>
+  <div class="theme-ctl" role="group" aria-label="Store theme" title="Store theme — same store and catalog, three looks">
+    <button class="tbtn" data-theme="neon">Neon Tech</button>
+    <button class="tbtn" data-theme="everyday">Everyday</button>
+    <button class="tbtn" data-theme="luxury">Luxury</button>
+  </div>
   <button id="cartBtn" class="cart-btn">🧺 Cart <span id="cartCount" class="cart-count">0</span></button>
 </header>
 
@@ -170,6 +175,12 @@
           <label>Number <input id="vsNumber" type="number" value="42" min="1"></label>
           <label>Display real-world address on storefront (optional)
             <input id="vsRealAddr" type="text" placeholder="e.g. 123 Main St, Springfield"></label>
+          <label>Store theme
+            <select id="vsTheme">
+              <option value="neon">Neon Tech — high-tech flagship</option>
+              <option value="everyday">Everyday — bright neighborhood store</option>
+              <option value="luxury">Luxury — boutique marble &amp; brass</option>
+            </select></label>
           <button class="btn-primary wide" id="vsApplyBtn">Assign virtual address</button>
           <div class="path-result" id="vsResult"></div>
         </div>
